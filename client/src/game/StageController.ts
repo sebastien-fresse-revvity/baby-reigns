@@ -1,9 +1,9 @@
-// Direction « Monarchie en pyjama » : une scène Babylon lisible, tactile et responsive autour des décrets nocturnes.
 import {
   AdvancedDynamicTexture,
   Button,
   Control,
   Ellipse,
+  Image,
   Rectangle,
   StackPanel,
   TextBlock,
@@ -26,6 +26,14 @@ const C = {
   pale: "#E7EDF7",
 };
 
+const ASSET_BASE = `${import.meta.env.BASE_URL}assets/`;
+const BACKGROUND_URL = `${ASSET_BASE}nursery-night.svg`;
+const LOGO_URL = `${ASSET_BASE}logo.svg`;
+const EVENT_IMAGE_BY_ID: Record<string, string> = {
+  cacapocalypse: `${ASSET_BASE}event-diaper.svg`,
+  doudou: `${ASSET_BASE}event-plush.svg`,
+};
+
 const GAUGES: Array<{ key: GaugeKey; label: string; symbol: string; color: string; inverse?: boolean }> = [
   { key: "sleep", label: "Sommeil", symbol: "◔", color: C.lavender },
   { key: "clean", label: "Propreté", symbol: "✦", color: C.butter },
@@ -33,30 +41,30 @@ const GAUGES: Array<{ key: GaugeKey; label: string; symbol: string; color: strin
   { key: "stock", label: "Réserves", symbol: "□", color: C.sky },
 ];
 
-function text(name: string, value: string, size: number, color = C.ink, weight = "400") {
-  const block = new TextBlock(name, value);
-  block.color = color;
-  block.fontFamily = "DM Sans, Arial, sans-serif";
-  block.fontSize = size;
-  block.fontWeight = weight;
-  return block;
+function txt(name: string, value: string, size: number, color = C.ink, weight = "400") {
+  const control = new TextBlock(name, value);
+  control.color = color;
+  control.fontFamily = "DM Sans, Arial, sans-serif";
+  control.fontSize = size;
+  control.fontWeight = weight;
+  return control;
 }
 
-function title(name: string, value: string, size: number, color = C.ink) {
-  const block = text(name, value, size, color, "700");
-  block.fontFamily = "Fraunces, Georgia, serif";
-  return block;
+function heading(name: string, value: string, size: number, color = C.ink) {
+  const control = txt(name, value, size, color, "700");
+  control.fontFamily = "Fraunces, Georgia, serif";
+  return control;
 }
 
 function panel(name: string, background: string, radius = 20) {
-  const rectangle = new Rectangle(name);
-  rectangle.background = background;
-  rectangle.thickness = 0;
-  rectangle.cornerRadius = radius;
-  return rectangle;
+  const control = new Rectangle(name);
+  control.background = background;
+  control.thickness = 0;
+  control.cornerRadius = radius;
+  return control;
 }
 
-function button(name: string, label: string, background: string, foreground: string) {
+function actionButton(name: string, label: string, background: string, foreground: string) {
   const control = Button.CreateSimpleButton(name, label);
   control.height = "54px";
   control.background = background;
@@ -106,44 +114,17 @@ export class StageController {
   }
 
   private buildBackdrop() {
-    const bg = panel("night-sky", C.midnight, 0);
-    bg.width = 1;
-    bg.height = 1;
-    this.ui.addControl(bg);
+    const background = new Image("nursery-night", BACKGROUND_URL);
+    background.width = 1;
+    background.height = 1;
+    background.stretch = Image.STRETCH_FILL;
+    this.ui.addControl(background);
 
-    const moonGlow = new Ellipse("moon-glow");
-    moonGlow.width = this.mobile ? "260px" : "420px";
-    moonGlow.height = this.mobile ? "260px" : "420px";
-    moonGlow.left = this.mobile ? "205px" : "500px";
-    moonGlow.top = this.mobile ? "-300px" : "-250px";
-    moonGlow.background = "#F7C94818";
-    moonGlow.color = "#F7C94844";
-    moonGlow.thickness = 2;
-    bg.addControl(moonGlow);
-
-    const moon = title("moon", "◔", this.mobile ? 112 : 170, "#FFF8E7CC");
-    moon.left = moonGlow.left;
-    moon.top = moonGlow.top;
-    bg.addControl(moon);
-
-    const stars = text("stars", "✦      ·      ✧        ·      ✦       ·       ✧", this.mobile ? 15 : 22, "#F7C94877", "700");
-    stars.top = this.mobile ? "-225px" : "-325px";
-    bg.addControl(stars);
-
-    const floor = panel("floor", "#172B4ECC", 0);
-    floor.width = 1;
-    floor.height = this.mobile ? "270px" : "330px";
-    floor.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-    bg.addControl(floor);
-
-    const crib = panel("crib", "#FFF8E719", 18);
-    crib.width = this.mobile ? "250px" : "410px";
-    crib.height = this.mobile ? "105px" : "145px";
-    crib.left = this.mobile ? "165px" : "450px";
-    crib.top = this.mobile ? "295px" : "270px";
-    crib.thickness = 4;
-    crib.color = "#FFF8E744";
-    bg.addControl(crib);
+    const wash = panel("night-wash", C.midnight, 0);
+    wash.width = 1;
+    wash.height = 1;
+    wash.alpha = this.mobile ? 0.18 : 0.1;
+    this.ui.addControl(wash);
   }
 
   private resetStage() {
@@ -153,6 +134,14 @@ export class StageController {
     this.hint = null;
     this.result = null;
     this.gaugeViews.clear();
+  }
+
+  private logo(name: string, size: number) {
+    const logo = new Image(name, LOGO_URL);
+    logo.width = `${size}px`;
+    logo.height = `${size}px`;
+    logo.stretch = Image.STRETCH_UNIFORM;
+    return logo;
   }
 
   private showTitle() {
@@ -166,23 +155,23 @@ export class StageController {
     shell.color = "#FFFFFF22";
     this.root.addControl(shell);
 
-    const crest = title("crest", "♛", this.mobile ? 70 : 82, C.butter);
-    crest.top = this.mobile ? "-255px" : "-220px";
+    const crest = this.logo("crest", this.mobile ? 92 : 108);
+    crest.top = this.mobile ? "-250px" : "-215px";
     shell.addControl(crest);
 
-    const kicker = text("kicker", "UNE NUIT · QUATRE JAUGES · ZÉRO RÉPIT", this.mobile ? 12 : 15, C.butter, "700");
-    kicker.top = this.mobile ? "-190px" : "-155px";
+    const kicker = txt("kicker", "UNE NUIT · QUATRE JAUGES · ZÉRO RÉPIT", this.mobile ? 12 : 15, C.butter, "700");
+    kicker.top = this.mobile ? "-180px" : "-150px";
     shell.addControl(kicker);
 
-    const heading = title("heading", "Bébé Reigns", this.mobile ? 54 : 68, C.cream);
-    heading.top = this.mobile ? "-115px" : "-84px";
-    shell.addControl(heading);
+    const title = heading("title", "Bébé Reigns", this.mobile ? 54 : 68, C.cream);
+    title.top = this.mobile ? "-105px" : "-80px";
+    shell.addControl(title);
 
-    const subtitle = text("subtitle", "La nuit des petits tyrans", this.mobile ? 21 : 25, C.pale, "600");
-    subtitle.top = this.mobile ? "-54px" : "-18px";
+    const subtitle = txt("subtitle", "La nuit des petits tyrans", this.mobile ? 21 : 25, C.pale, "600");
+    subtitle.top = this.mobile ? "-46px" : "-15px";
     shell.addControl(subtitle);
 
-    const description = text(
+    const description = txt(
       "description",
       "Swipez à gauche ou à droite. Gardez sommeil, propreté et réserves à flot, sans laisser le stress atteindre la mutinerie.",
       this.mobile ? 17 : 19,
@@ -191,19 +180,19 @@ export class StageController {
     );
     description.width = this.mobile ? "500px" : "600px";
     description.height = "110px";
-    description.top = this.mobile ? "44px" : "63px";
+    description.top = this.mobile ? "50px" : "65px";
     description.textWrapping = TextWrapping.WordWrap;
     shell.addControl(description);
 
-    const start = button("start", "Entrer dans la nuit", C.butter, C.ink);
+    const start = actionButton("start", "Entrer dans la nuit", C.butter, C.ink);
     start.width = this.mobile ? "430px" : "360px";
-    start.top = this.mobile ? "180px" : "180px";
+    start.top = "180px";
     start.onPointerUpObservable.add(() => this.startGame());
     shell.addControl(start);
 
     const stats = StorageService.stats();
     const record = StorageService.bestScore();
-    const history = text(
+    const history = txt(
       "history",
       record > 0 || stats.games > 0
         ? `Record ${record.toLocaleString("fr-FR")} pts · ${stats.wins} aube${stats.wins > 1 ? "s" : ""} sauvée${stats.wins > 1 ? "s" : ""} · meilleure série ${stats.bestStreak}`
@@ -212,7 +201,7 @@ export class StageController {
       C.lavender,
       "700",
     );
-    history.top = this.mobile ? "250px" : "250px";
+    history.top = "250px";
     shell.addControl(history);
   }
 
@@ -238,19 +227,24 @@ export class StageController {
     hud.color = "#FFFFFF22";
     this.root.addControl(hud);
 
-    const night = title("night", `NUIT ${this.world.getNight()}`, this.mobile ? 20 : 24, C.cream);
+    const logo = this.logo("hud-logo", this.mobile ? 40 : 48);
+    logo.left = this.mobile ? "-276px" : "-600px";
+    logo.top = this.mobile ? "-50px" : "-25px";
+    hud.addControl(logo);
+
+    const night = heading("night", `NUIT ${this.world.getNight()}`, this.mobile ? 20 : 24, C.cream);
     night.width = "150px";
-    night.left = this.mobile ? "-215px" : "-525px";
+    night.left = this.mobile ? "-205px" : "-520px";
     night.top = this.mobile ? "-50px" : "-24px";
     hud.addControl(night);
 
-    const meta = text("meta", `${this.world.getTimeLabel()} · décret ${this.world.getRound() + 1}/${this.world.getTotalRounds()}`, 13, C.lavender, "700");
+    const meta = txt("meta", `${this.world.getTimeLabel()} · décret ${this.world.getRound() + 1}/${this.world.getTotalRounds()}`, 13, C.lavender, "700");
     meta.width = "220px";
     meta.left = this.mobile ? "-180px" : "-490px";
     meta.top = this.mobile ? "-20px" : "12px";
     hud.addControl(meta);
 
-    const grace = text(
+    const grace = txt(
       "grace",
       `${this.world.getStreak() > 1 ? `Série ${this.world.getStreak()} ✦ · ` : ""}${this.world.isGraceAvailable() ? "Grâce ♛ prête" : "Grâce utilisée"}`,
       12,
@@ -269,7 +263,6 @@ export class StageController {
     row.top = this.mobile ? "35px" : "8px";
     row.left = this.mobile ? "0px" : "180px";
     hud.addControl(row);
-
     GAUGES.forEach((gauge) => row.addControl(this.createGauge(gauge)));
     this.refreshHud(this.world.getMetrics());
   }
@@ -281,11 +274,11 @@ export class StageController {
     frame.thickness = 1;
     frame.color = "#FFFFFF22";
 
-    const caption = text(`caption-${spec.key}`, `${spec.symbol} ${spec.label}`, this.mobile ? 11 : 13, C.pale, "700");
+    const caption = txt(`caption-${spec.key}`, `${spec.symbol} ${spec.label}`, this.mobile ? 11 : 13, C.pale, "700");
     caption.top = "-20px";
     frame.addControl(caption);
 
-    const value = text(`value-${spec.key}`, "0", this.mobile ? 20 : 23, C.cream, "700");
+    const value = txt(`value-${spec.key}`, "0", this.mobile ? 20 : 23, C.cream, "700");
     value.top = "3px";
     frame.addControl(value);
 
@@ -299,7 +292,6 @@ export class StageController {
     fill.height = "9px";
     fill.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
     track.addControl(fill);
-
     this.gaugeViews.set(spec.key, { value, fill, frame });
     return frame;
   }
@@ -331,35 +323,45 @@ export class StageController {
     this.root.addControl(card);
     this.card = card;
 
-    const category = text("category", `DÉCRET IMPROMPTU · NUIT ${this.world.getNight()} · ${this.world.getTimeLabel()}`, this.mobile ? 11 : 13, C.tomato, "700");
+    const category = txt("category", `DÉCRET IMPROMPTU · NUIT ${this.world.getNight()} · ${this.world.getTimeLabel()}`, this.mobile ? 11 : 13, C.tomato, "700");
     category.top = this.mobile ? "-268px" : "-250px";
     card.addControl(category);
 
-    const art = new Ellipse("event-art");
-    art.width = this.mobile ? "105px" : "128px";
-    art.height = this.mobile ? "105px" : "128px";
-    art.top = this.mobile ? "-190px" : "-165px";
-    art.background = event.art.background;
-    art.color = C.ink;
-    art.thickness = 3;
-    card.addControl(art);
-    art.addControl(title("event-glyph", event.art.glyph, this.mobile ? 52 : 66, event.art.color));
+    const eventImage = EVENT_IMAGE_BY_ID[event.id];
+    if (eventImage) {
+      const art = new Image("event-art", eventImage);
+      art.width = this.mobile ? "112px" : "136px";
+      art.height = this.mobile ? "112px" : "136px";
+      art.top = this.mobile ? "-190px" : "-165px";
+      art.stretch = Image.STRETCH_UNIFORM;
+      card.addControl(art);
+    } else {
+      const art = new Ellipse("event-art");
+      art.width = this.mobile ? "105px" : "128px";
+      art.height = this.mobile ? "105px" : "128px";
+      art.top = this.mobile ? "-190px" : "-165px";
+      art.background = event.art.background;
+      art.color = C.ink;
+      art.thickness = 3;
+      card.addControl(art);
+      art.addControl(heading("event-glyph", event.art.glyph, this.mobile ? 52 : 66, event.art.color));
+    }
 
-    const heading = title("event-title", event.title, this.mobile ? 31 : 39, C.ink);
-    heading.width = this.mobile ? "520px" : "650px";
-    heading.height = "74px";
-    heading.top = this.mobile ? "-105px" : "-72px";
-    heading.textWrapping = TextWrapping.WordWrap;
-    card.addControl(heading);
+    const title = heading("event-title", event.title, this.mobile ? 31 : 39, C.ink);
+    title.width = this.mobile ? "520px" : "650px";
+    title.height = "74px";
+    title.top = this.mobile ? "-105px" : "-72px";
+    title.textWrapping = TextWrapping.WordWrap;
+    card.addControl(title);
 
-    const story = text("story", event.story, this.mobile ? 17 : 20, C.softInk, "500");
+    const story = txt("story", event.story, this.mobile ? 17 : 20, C.softInk, "500");
     story.width = this.mobile ? "500px" : "620px";
     story.height = this.mobile ? "100px" : "95px";
     story.top = this.mobile ? "-17px" : "18px";
     story.textWrapping = TextWrapping.WordWrap;
     card.addControl(story);
 
-    this.hint = text("hint", "Glissez pour entrevoir les conséquences", this.mobile ? 13 : 15, C.softInk, "700");
+    this.hint = txt("hint", "Glissez pour entrevoir les conséquences", this.mobile ? 13 : 15, C.softInk, "700");
     this.hint.top = this.mobile ? "72px" : "94px";
     card.addControl(this.hint);
 
@@ -370,31 +372,23 @@ export class StageController {
     actions.top = this.mobile ? "160px" : "170px";
     card.addControl(actions);
 
-    const left = button("left", `← ${this.shortLabel(event.left.label)}`, C.lavender, C.ink);
+    const left = actionButton("left", `← ${this.shortLabel(event.left.label)}`, C.lavender, C.ink);
     left.width = this.mobile ? "510px" : "330px";
     left.onPointerUpObservable.add(() => this.resolveChoice("left"));
     actions.addControl(left);
 
-    if (this.mobile) {
-      const spacer = new Rectangle("spacer");
-      spacer.width = "1px";
-      spacer.height = "10px";
-      spacer.thickness = 0;
-      actions.addControl(spacer);
-    } else {
-      const spacer = new Rectangle("spacer");
-      spacer.width = "20px";
-      spacer.height = "1px";
-      spacer.thickness = 0;
-      actions.addControl(spacer);
-    }
+    const spacer = new Rectangle("spacer");
+    spacer.width = this.mobile ? "1px" : "20px";
+    spacer.height = this.mobile ? "10px" : "1px";
+    spacer.thickness = 0;
+    actions.addControl(spacer);
 
-    const right = button("right", `${this.shortLabel(event.right.label)} →`, C.butter, C.ink);
+    const right = actionButton("right", `${this.shortLabel(event.right.label)} →`, C.butter, C.ink);
     right.width = this.mobile ? "510px" : "330px";
     right.onPointerUpObservable.add(() => this.resolveChoice("right"));
     actions.addControl(right);
 
-    this.result = text("result", "", this.mobile ? 13 : 15, C.cream, "700");
+    this.result = txt("result", "", this.mobile ? 13 : 15, C.cream, "700");
     this.result.width = this.mobile ? "590px" : "760px";
     this.result.height = "70px";
     this.result.top = this.mobile ? "360px" : "360px";
@@ -433,8 +427,7 @@ export class StageController {
     this.hint.text = this.effectLabel(effects);
     const dangerous = (Object.keys(effects) as GaugeKey[]).some((key) => {
       const delta = effects[key] ?? 0;
-      const harmful = key === "stress" ? delta > 0 : delta < 0;
-      return harmful && Math.abs(delta) >= 12;
+      return (key === "stress" ? delta > 0 : delta < 0) && Math.abs(delta) >= 12;
     });
     this.hint.color = dangerous ? C.tomato : C.softInk;
   }
@@ -472,65 +465,47 @@ export class StageController {
 
     const shell = panel("ending", won ? "#FFF8E7F2" : "#0E1B35F2", 32);
     shell.width = this.mobile ? "600px" : "850px";
-    shell.height = this.mobile ? "620px" : "620px";
+    shell.height = "620px";
     shell.thickness = 4;
     shell.color = won ? C.ink : "#FFFFFF33";
     this.root.addControl(shell);
 
-    const icon = title("ending-icon", won ? "♛" : "!", this.mobile ? 66 : 82, won ? C.butter : C.tomato);
+    const icon = this.logo("ending-logo", this.mobile ? 74 : 88);
     icon.top = "-225px";
     shell.addControl(icon);
 
-    const heading = title("ending-heading", won ? "L’aube est sauvée" : "Le royaume chancelle", this.mobile ? 38 : 50, won ? C.ink : C.cream);
-    heading.top = "-150px";
-    shell.addControl(heading);
+    const title = heading("ending-title", won ? "L’aube est sauvée" : "Le royaume chancelle", this.mobile ? 38 : 50, won ? C.ink : C.cream);
+    title.top = "-150px";
+    shell.addControl(title);
 
-    const copy = text(
-      "ending-copy",
-      won ? "Le petit tyran dort. Déposez la couronne quelques minutes." : result.cause ?? "Le royaume réclame une pause.",
-      this.mobile ? 17 : 20,
-      won ? C.softInk : C.pale,
-      "500",
-    );
+    const copy = txt("ending-copy", won ? "Le petit tyran dort. Déposez la couronne quelques minutes." : result.cause ?? "Le royaume réclame une pause.", this.mobile ? 17 : 20, won ? C.softInk : C.pale, "500");
     copy.width = this.mobile ? "500px" : "650px";
     copy.height = "80px";
     copy.top = "-80px";
     copy.textWrapping = TextWrapping.WordWrap;
     shell.addControl(copy);
 
-    const score = title("score", `${result.score.toLocaleString("fr-FR")} points`, this.mobile ? 30 : 38, won ? C.ink : C.cream);
+    const score = heading("score", `${result.score.toLocaleString("fr-FR")} points`, this.mobile ? 30 : 38, won ? C.ink : C.cream);
     score.top = "10px";
     shell.addControl(score);
 
-    const metrics = text(
-      "ending-metrics",
-      `Sommeil ${result.metrics.sleep} · Propreté ${result.metrics.clean} · Stress ${result.metrics.stress} · Stock ${result.metrics.stock}`,
-      this.mobile ? 12 : 15,
-      won ? C.ink : C.pale,
-      "700",
-    );
+    const metrics = txt("ending-metrics", `Sommeil ${result.metrics.sleep} · Propreté ${result.metrics.clean} · Stress ${result.metrics.stress} · Stock ${result.metrics.stock}`, this.mobile ? 12 : 15, won ? C.ink : C.pale, "700");
     metrics.top = "70px";
     shell.addControl(metrics);
 
     const unlocked = new Set(StorageService.achievements());
-    const achievements = text(
-      "achievements",
-      ACHIEVEMENTS.map((achievement) => `${unlocked.has(achievement.id) ? achievement.symbol : "·"} ${achievement.name}`).join("   "),
-      this.mobile ? 11 : 14,
-      won ? C.softInk : C.lavender,
-      "700",
-    );
+    const achievements = txt("achievements", ACHIEVEMENTS.map((achievement) => `${unlocked.has(achievement.id) ? achievement.symbol : "·"} ${achievement.name}`).join("   "), this.mobile ? 11 : 14, won ? C.softInk : C.lavender, "700");
     achievements.width = this.mobile ? "540px" : "720px";
     achievements.top = "125px";
     shell.addControl(achievements);
 
-    const retry = button("retry", won ? "Une autre nuit" : "Reprendre le royaume", won ? C.ink : C.butter, won ? C.cream : C.ink);
+    const retry = actionButton("retry", won ? "Une autre nuit" : "Reprendre le royaume", won ? C.ink : C.butter, won ? C.cream : C.ink);
     retry.width = this.mobile ? "340px" : "380px";
     retry.top = "195px";
     retry.onPointerUpObservable.add(() => this.startGame());
     shell.addControl(retry);
 
-    const home = text("home", "Retour à l’accueil", 15, won ? C.softInk : C.pale, "700");
+    const home = txt("home", "Retour à l’accueil", 15, won ? C.softInk : C.pale, "700");
     home.top = "255px";
     home.isPointerBlocker = true;
     home.onPointerUpObservable.add(() => this.showTitle());
