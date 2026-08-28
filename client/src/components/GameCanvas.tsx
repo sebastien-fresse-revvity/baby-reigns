@@ -20,6 +20,7 @@ export default function GameCanvas() {
 
     let handle: GameHandle | null = null;
     let disposed = false;
+    let titleTapFallback: (() => void) | null = null;
 
     createGameScene(engine, canvas)
       .then((gameHandle: GameHandle) => {
@@ -27,8 +28,22 @@ export default function GameCanvas() {
           gameHandle.dispose();
           return;
         }
+
         handle = gameHandle;
         engine.runRenderLoop(() => gameHandle.scene.render());
+
+        // Babylon GUI can occasionally miss the title button pointer-up on touch
+        // browsers. Keep a one-shot native canvas fallback for the title screen.
+        // It uses the exact same keyboard path as pressing Enter, then removes
+        // itself so it cannot interfere with swipes or choice buttons in-game.
+        titleTapFallback = () => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+          if (titleTapFallback) {
+            canvas.removeEventListener("pointerup", titleTapFallback);
+            titleTapFallback = null;
+          }
+        };
+        canvas.addEventListener("pointerup", titleTapFallback);
       })
       .catch((error: unknown) => console.error("Impossible d’initialiser Bébé Reigns", error));
 
@@ -38,6 +53,7 @@ export default function GameCanvas() {
     return () => {
       disposed = true;
       window.removeEventListener("resize", onResize);
+      if (titleTapFallback) canvas.removeEventListener("pointerup", titleTapFallback);
       handle?.dispose();
       engine.dispose();
       startedRef.current = false;
