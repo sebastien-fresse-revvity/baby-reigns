@@ -7,6 +7,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import { GameWorld } from "./GameWorld";
 import { StageController } from "./StageController";
+import "./eventArtworkPatch";
 
 export type GameHandle = {
   scene: Scene;
