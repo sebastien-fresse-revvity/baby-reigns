@@ -26,6 +26,24 @@ jobs:
         with:
           node-version: 22
 
+      - name: Restore original visual assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/baby-reigns-assets client/public/assets/original
+          cat client/assets-source/original-assets.b64.* | base64 --decode > /tmp/original-assets.tgz
+          tar -xzf /tmp/original-assets.tgz -C /tmp/baby-reigns-assets
+          find /tmp/baby-reigns-assets -type f -name '*.webp' -exec cp '{}' client/public/assets/original/ \;
+          echo 'Restored assets:'
+          find client/public/assets/original -maxdepth 1 -type f -name '*.webp' -printf '%f\n' | sort
+          test -f client/public/assets/original/fond-nurserie-nocturne.webp
+          test -f client/public/assets/original/logo-bebe-reigns.webp
+          test -f client/public/assets/original/cacapocalypse-nocturne.webp
+          test -f client/public/assets/original/rituel-du-doudou.webp
+          test -f client/public/assets/original/veilleuse-fait-son-show.webp
+          test -f client/public/assets/original/concert-des-soupirs.webp
+          test -f client/public/assets/original/reveil-trop-tot.webp
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
