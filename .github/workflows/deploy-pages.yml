@@ -3,6 +3,8 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'client/assets-source/**'
   workflow_dispatch:
 
 permissions:
