@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
-    "build:pages": "vite build",
+    "assets:restore": "node scripts/restore-original-assets.mjs",
+    "dev": "npm run assets:restore && vite --host",
+    "build": "npm run assets:restore && vite build",
+    "build:pages": "npm run assets:restore && vite build",
     "preview": "vite preview --host"
   },
   "dependencies": {
