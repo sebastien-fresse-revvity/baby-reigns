@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "assets:restore": "node scripts/restore-original-assets.mjs",
+    "assets:restore": "node scripts/prepare-original-assets.mjs",
     "dev": "npm run assets:restore && vite --host",
     "build": "npm run assets:restore && vite build",
     "build:pages": "npm run assets:restore && vite build",
